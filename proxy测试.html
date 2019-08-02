@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+
+	<body>
+		<div id="app">
+			<input type="text" id="input" value="5"/>
+		</div>
+		<script type="text/javascript">
+			const obj = {a: 1, b: 2};
+			const input = document.getElementById("input");
+
+			const newObj = new Proxy(obj, {
+				get: function(target, key) {
+					console.log(`getting ${key}!`);
+					return Reflect.get(target, key);
+				},
+				set: function(target, key, value) {
+					console.log(`${key}获取值：${value}`);
+					if(key === "text") {
+						input.value = value;
+					}
+					return Reflect.set(target, key, value);
+				}
+			});
+
+			Object.keys(obj).forEach((key) => {
+				newObj[key] = obj[key]
+			})
+		</script>
+	</body>
+
+</html>
