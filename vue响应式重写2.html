@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+
+<body>
+    <div id="app">
+        <input type="text" v-model="name">
+        <div>
+            <div>
+                <div>
+                    <div>
+                        <div>
+                            <h3>v-bind形式：</h3>
+                            <h3 v-bind="name">dom 深度遍历</h3>
+                            <h3>{{}}形式：</h3>
+                            <h3>{{ name }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="text" v-model="testData1">
+        <h3>{{ testData1 }}</h3>
+        <input type="text" v-model="testData2">
+        <h3>{{ testData2 }}</h3>
+    </div>
+    <script type="text/javascript">
+        window.onload = function() { //加载定义初始化函数
+            var app = new myVue({ // 构造函数
+                el: '#app', // dom
+                data: {
+                    testData1: '仿Vue',
+                    testData2: '双向绑定',
+                    name: 'OBKoro1'
+                }
+            })
+        }
+
+        let uid = 0;
+
+        class Dep {
+            // 订阅者事件
+            constructor() {
+                this.id = uid;
+                // 区分不同的watcher
+                this.subs = [];
+                // 记录订阅者列表
+            }
+
+            depend() {
+                Dep.target.addDep(this);
+            }
+
+            addSub(sub) {
+                this.subs.push(sub);
+            }
+
+            notify() {
+                this.subs.forEach(sub => sub.update())
+            }
+        }
+
+        Dep.target = null;
+
+        class Observe {
+            // 监听者事件
+            constructor(value) {
+                this.value = value;
+                this.walk(value);
+            }
+
+            walk(value) {
+                Object.keys(value).forEach(key => this.convert(key, value[key]));
+            }
+
+            convert(key, val) {
+                defineReactive(this.value, key, val);
+            }
+        }
+
+        const defineReactive = (obj, key, val) => {
+            const dep = new Dep();
+            let childOb = observe(val);
+            Object.defineProperty(obj, key, {
+                enumerable: true,
+                configurable: true,
+                get: () => {
+                    if (Dep.target) {
+                        dep.depend();
+                    }
+                    return val;
+                },
+                set: newVal => {
+                    if (val === newVal) {
+                        val = newVal;
+                        childOb = observe(newVal);
+                        dep.notify();
+                    }
+                }
+            })
+        }
+
+        const observe = (value) => {
+            // 判断是否为对象
+            if (!value || typeof value !== 'object') {
+                return;
+            }
+            return new Observe(value);
+        }
+
+        class Watcher {
+            // 实现订阅者
+            constructor(vm, expOrFn, cb) {
+                this.depIds = {};
+                this.vm = vm;
+                this.cb = cb;
+                this.expOrFn = expOrFn;
+                this.val = this.get();
+            }
+
+            update() {
+                this.run();
+            }
+
+            addDep() {
+                if (!this.depIds.hasOwnProperty(dep.id)) {
+                    dep.addSub(this);
+                    this.depIds[dep.id] = dep;
+                }
+            }
+
+            run() {
+                const val = this.get();
+                if (val !== this.val) {
+                    this.val = val;
+                    this.cb.call(this.vm, val);
+                }
+            }
+
+            get() {
+                Dep.target = this;
+                const val = this.vm._data[this.expOrFn];
+                Dep.target = null;
+                return val;
+            }
+        }
+
+        class myVue {
+            constructor(options = {}) {
+                this.$options = options;
+                let data = (this._data = this.$options.data);
+                Object.keys(data).forEach(key => this._proxy(key));
+                observe(data);
+            }
+            $watch(expOrFn, cb) {
+                new Watcher(this, expOrFn, cb);
+            }
+            _proxy(key) {
+                Object.defineProperty(this, key, {
+                    configurable: true,
+                    enumerable: true,
+                    get: () => this._data[key],
+                    set: val => {
+                        this._data[key] = val;
+                    }
+                })
+            }
+        }
+    </script>
+</body>
+
+</html>

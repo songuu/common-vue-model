@@ -1,0 +1,11 @@
+<body>
+    <div id="app">
+    </div>
+    <% if(htmlWebpackPlugin.options.hasSkeleton) { %>
+        <div id="skeleton">
+            <!-- 骨架屏通过htmlWebpackPlugin在启动打包的时候自动注入 -->
+            <%= htmlWebpackPlugin.options.loading.html %>
+        </div>
+        <% } %>
+            <!-- built files will be auto injected -->
+</body>
